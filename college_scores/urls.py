@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/', include('apps.students.urls')),
     path('api/', include('apps.teachers.urls')),
     path('api/', include('apps.subjects.urls')),
+    path('docs/', include('college_scores.swagger')),
 ]

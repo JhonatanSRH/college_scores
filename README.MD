@@ -130,6 +130,10 @@ Se puede ejecutar todas las pruebas con el comando:
     python manage.py test apps
     ```
 
+## Docs
+
+Este proyecto esta documentado con swagger, la ruta es: `/docs/swagger/`
+
 ## Licencia
 
 Este proyecto está bajo la Licencia MIT.
