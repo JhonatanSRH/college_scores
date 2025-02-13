@@ -29,6 +29,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'django_filters',
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
@@ -36,6 +37,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'apps.students',
+    'apps.teachers',
+    'apps.subjects',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -122,7 +125,9 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 5,
