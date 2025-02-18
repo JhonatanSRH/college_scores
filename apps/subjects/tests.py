@@ -1,8 +1,7 @@
 """Subjects app tests."""
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-from apps.students.models import Student
-from apps.teachers.models import Teacher
+from apps.users.models import User
 from apps.subjects.models import Subject, Registration
 from rest_framework.test import APITestCase
 
@@ -16,11 +15,11 @@ class SubjectsAPITestCase(APITestCase):
                                             password='password123')
         refresh = RefreshToken.for_user(self.user)
         self.token = refresh.access_token
-        self.student = Student.objects.create(first_name='Test',
+        self.student = User.objects.create(first_name='Test',
                                              last_name='Student',
                                              email='test.student@test.com',
                                              birth_date='1999-01-01')
-        self.teacher = Teacher.objects.create(first_name='Test',
+        self.teacher = User.objects.create(first_name='Test',
                                              last_name='Teacher',
                                              email='test.teacher@test.com')
         self.subject = Subject.objects.create(name='Test Subject',

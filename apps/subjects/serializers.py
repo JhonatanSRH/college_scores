@@ -3,8 +3,8 @@ from django.db import transaction, IntegrityError
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 from apps.subjects.models import Subject, Registration
-from apps.students.models import Student
-from apps.teachers.serializers import TeacherSerializer
+from apps.users.models import User
+from apps.users.serializers import UserSerializer
 
 class SubjectSerializer(serializers.ModelSerializer):
     """Subject serializer."""
@@ -16,6 +16,8 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Registration serializer."""
+    student = UserSerializer(read_only=True)
+
     class Meta:
         """Meta class."""
         model = Registration
@@ -24,9 +26,17 @@ class RegistrationSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'student', 'subject', 'is_approved')
 
     def validate_score(self, value):
-        if 0 <= value <= 5:
+        """Validate score"""
+        if value and 0 <= value <= 5:
             return value
-        raise ValidationError({'score': 'The score must be a value between 0 and 5'})
+        raise ValidationError('The score must be a value between 0 and 5')
+
+    def validate(self, data):
+        """Validate if there is a previous score"""
+        if 'score' in data:
+            if self.instance.score:
+                raise ValidationError({'score': 'The score has been submitted already.'})
+        return super().validate(data)
 
     def save(self, **kwargs):
         """Update is_approved depending on the value of the score"""
@@ -38,15 +48,16 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class RegistrationStudentSerializer(serializers.ModelSerializer):
     """Registration Student serializer."""
+    student = UserSerializer(read_only=True)
+
     class Meta:
         """Meta class."""
         model = Registration
-        depth = 1
         fields = ('id', 'student', 'is_approved', 'score')
 
 class SubjectStudentsSerializer(serializers.ModelSerializer):
     """Subject Student serializer."""
-    teacher = TeacherSerializer(read_only=True)
+    teacher = UserSerializer(read_only=True)
     registrations = serializers.SerializerMethodField()
     
     def get_registrations(self, obj):
@@ -61,7 +72,7 @@ class SubjectStudentsSerializer(serializers.ModelSerializer):
 class MultipleSubjectsRegistrationSerializer(serializers.Serializer):
     """Multiple Subjects Registration serializer."""
     student = serializers.PrimaryKeyRelatedField(
-        queryset=Student.objects.all(), required=True)
+        queryset=User.objects.all(), required=True)
     subjects = serializers.PrimaryKeyRelatedField(
         queryset=Subject.objects.all(), many=True, required=True)
 
@@ -71,12 +82,16 @@ class MultipleSubjectsRegistrationSerializer(serializers.Serializer):
         subjects = data.get('subjects')
         for subject in subjects:
             previous_subjects = subject.previous_subjects.all()
-            for previous_subject in previous_subjects:
-                if not Registration.objects.filter(
-                    student=student, subject=previous_subject, is_approved=True).exists():
+            if previous_subjects:
+                approved_subjects = Registration.objects.filter(
+                    student=student, subject__in=previous_subjects, is_approved=True
+                ).exists()
+                if not approved_subjects:
+                    subjects_names = (subject.name for subject in subject.previous_subjects.all())
                     raise serializers.ValidationError(
-                        {'subjects': ("The student hasn't approved "
-                                      f"the subject '{previous_subject.name}' yet.")}
+                        {
+                        'subjects': ("The student hasn't approved "
+                                    f"the subject(s) '{", ".join(subjects_names)}' yet.")}
                     )
         return data
 

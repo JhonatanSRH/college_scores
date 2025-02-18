@@ -1,12 +1,15 @@
 """Subjects app models."""
 from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Subject(models.Model):
     """Subject model."""
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=10, unique=True)
     teacher = models.ForeignKey(
-        'teachers.Teacher', on_delete=models.CASCADE, related_name='subjects')
+        User, on_delete=models.CASCADE, related_name='subjects')
     previous_subjects = models.ManyToManyField(
         'self', symmetrical=False, blank=True, related_name='requirements')
 
@@ -17,7 +20,7 @@ class Subject(models.Model):
 class Registration(models.Model):
     """Registration model."""
     student = models.ForeignKey(
-        'students.Student', on_delete=models.CASCADE, related_name='registrations')
+        User, on_delete=models.CASCADE, related_name='registrations')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='registrations')
     registration_date = models.DateField(auto_now_add=True)
     score = models.FloatField(blank=True, null=True)

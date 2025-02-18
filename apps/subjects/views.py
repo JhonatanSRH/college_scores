@@ -2,8 +2,10 @@
 from django.db.models import Avg
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.subjects.models import Subject, Registration
+from apps.subjects.permissions import IsTeacher, IsStudent, IsSubjectTeacher
 from apps.subjects.serializers import (SubjectSerializer, RegistrationSerializer, 
                                        MultipleSubjectsRegistrationSerializer,
                                        SubjectStudentsSerializer)
@@ -13,6 +15,12 @@ class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     filterset_fields = ('name', 'code', 'teacher')
+    
+    def get_permissions(self):
+        permissions = [IsTeacher]
+        if self.action in ['list']:
+            permissions = [IsAuthenticated]
+        return [p() for p in permissions]
 
     @action(detail=False, methods=['get'])
     def students(self, request):
@@ -33,6 +41,12 @@ class RegistrationViewSet(viewsets.GenericViewSet,
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
     filterset_fields = ('student', 'subject', 'is_approved')
+    
+    def get_permissions(self):
+        permissions = [IsStudent]
+        if self.action in ['update']:
+            permissions = [IsSubjectTeacher]
+        return [p() for p in permissions]
 
     def list(self, request, *args, **kwargs):
         """List data and provide the score average"""

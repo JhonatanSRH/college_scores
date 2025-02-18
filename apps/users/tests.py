@@ -1,2 +1,2 @@
-"""Students app tests."""
+"""Users app tests."""
 from django.test import TestCase
